@@ -36,3 +36,8 @@ func (kp *KeyPair) Private() crypto.Signer {
 func (kp *KeyPair) Public() crypto.PublicKey {
 	return kp.public
 }
+
+func (kp *KeyPair) PublicToBytes() []byte {
+	raw := kp.public.(*PublicKey).Compress()
+	return raw[:]
+}
