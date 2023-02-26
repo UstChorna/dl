@@ -2,12 +2,10 @@ package core_test
 
 import (
 	"crypto"
-	"encoding/hex"
 	"fmt"
 	"testing"
 
 	bjj "github.com/iden3/go-iden3-crypto/babyjub"
-	"github.com/iden3/go-iden3-crypto/poseidon"
 	core "github.com/ilya-korotya/distributed_lab/baby_blockchain"
 	"github.com/stretchr/testify/require"
 )
@@ -30,17 +28,7 @@ func TestNewDID(t *testing.T) {
 			name:   "New DID",
 			pubKey: testingKeyPair.Public(),
 			want: &core.DID{
-				ID: func() string {
-					bytesPub, err := hex.DecodeString(testingPUB)
-					if err != nil {
-						panic(err)
-					}
-					id, err := poseidon.HashBytes(bytesPub)
-					if err != nil {
-						panic(err)
-					}
-					return id.Text(16)
-				}(),
+				ID:      testingPUB,
 				Method:  core.DefaultMethod,
 				Chain:   core.DefaultChain,
 				Network: core.DefaultNetwork,
@@ -50,12 +38,18 @@ func TestNewDID(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			pb := testingKeyPair.PublicToBytes()
-			got, err := core.NewDID(pb)
-			require.NoError(t, err)
+			got := core.NewDID(testingKeyPair.Public().(*core.PublicKey))
 			require.Equal(t, tt.want.String(), got.String())
 
 			fmt.Printf("did: %s for public key: %s", got.String(), testingPUB)
 		})
 	}
+}
+
+func TestResolvePubKey(t *testing.T) {
+	testingKeyPair := core.NewKeyPairFromPk(&testingPK)
+	did := core.NewDID(testingKeyPair.Public().(*core.PublicKey))
+	pubkey, err := did.ResolvePubKey()
+	require.NoError(t, err)
+	require.Equal(t, pubkey, testingKeyPair.Public().(*core.PublicKey))
 }
